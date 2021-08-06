@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Collections;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -83,7 +84,8 @@ public class AddressControllerTest {
         mockMvc
                 .perform(post("/address?content=my_address")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                        .header("authorization", "Bearer non_existing_access_token"))
+                        .header("authorization", "Bearer non_existing_access_token")
+                        .content("{\"flat_building_name\":\"xyz\", \"locality\":\"abc\", \"city\":\"pqr\", \"pincode\":\"\", \"state_uuid\":\"testUUID\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("code").value("ATHR-001"));
         verify(mockCustomerService, times(1)).getCustomer("non_existing_access_token");
@@ -100,7 +102,8 @@ public class AddressControllerTest {
         mockMvc
                 .perform(post("/address?content=my_address")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                        .header("authorization", "Bearer database_accesstoken"))
+                        .header("authorization", "Bearer database_accesstoken")
+                        .content("{\"flat_building_name\":\"xyz\", \"locality\":\"abc\", \"city\":\"pqr\", \"pincode\":\"\", \"state_uuid\":\"testUUID\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("code").value("ATHR-002"));
         verify(mockCustomerService, times(1)).getCustomer("database_accesstoken");
@@ -118,7 +121,8 @@ public class AddressControllerTest {
         mockMvc
                 .perform(post("/address?content=my_address")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                        .header("authorization", "Bearer database_accesstoken1"))
+                        .header("authorization", "Bearer database_accesstoken1")
+                        .content("{\"flat_building_name\":\"xyz\", \"locality\":\"abc\", \"city\":\"pqr\", \"pincode\":\"\", \"state_uuid\":\"testUUID\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("code").value("ATHR-003"));
         verify(mockCustomerService, times(1)).getCustomer("database_accesstoken1");
@@ -181,7 +185,6 @@ public class AddressControllerTest {
         verify(mockAddressService, times(1)).getStateByUUID("testUUID");
         verify(mockAddressService, times(1)).saveAddress(any(), any());
     }
-
 
     // ------------------------------------------ DELETE /address/{address_id} ------------------------------------------
 
@@ -305,6 +308,7 @@ public class AddressControllerTest {
         verify(mockAddressService, times(0)).deleteAddress(any());
     }
 
+
     // ------------------------------------------ GET /address/customer ------------------------------------------
 
     //This test case passes when you are able to retrieve all the saved address of a customer.
@@ -319,9 +323,9 @@ public class AddressControllerTest {
         addressEntity.setPincode("100000");
         addressEntity.setCity("city");
         addressEntity.setLocality("locality");
-        addressEntity.setFlatBuilNo("flatBuildNo");
+        addressEntity.setFlatBuildingNumber("flatBuildNo");
         final String stateUuid = UUID.randomUUID().toString();
-        addressEntity.setState(new StateEntity(stateUuid, "state"));
+        addressEntity.setStateId(new StateEntity(stateUuid, "state"));
         when(mockAddressService.getAllAddress(customerEntity)).thenReturn(Collections.singletonList(addressEntity));
 
         final String response = mockMvc
@@ -382,13 +386,14 @@ public class AddressControllerTest {
 
     //This test case passes when you have handled the exception of trying to fetch addresses for any customer while
     // the session of that customer is already expired.
+    //NOTE: Changing the request method to get instead of delete since this request is a get request.
     @Test
     public void shouldNotGetAllAddressesWithExpiredSessionUser() throws Exception {
         when(mockCustomerService.getCustomer("database_accesstoken1"))
                 .thenThrow(new AuthorizationFailedException("ATHR-003", "Your session is expired. Log in again to access this endpoint."));
 
         mockMvc
-                .perform(delete("/address/customer")
+                .perform(get("/address/customer")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
                         .header("authorization", "Bearer database_accesstoken1"))
                 .andExpect(status().isForbidden())
@@ -432,4 +437,5 @@ public class AddressControllerTest {
         final StatesListResponse statesLists = new ObjectMapper().readValue(response, StatesListResponse.class);
         assertNull(statesLists.getStates());
     }
+
 }

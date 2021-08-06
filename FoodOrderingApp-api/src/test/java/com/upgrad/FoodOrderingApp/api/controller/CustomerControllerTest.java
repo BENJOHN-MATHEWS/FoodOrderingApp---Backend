@@ -66,7 +66,7 @@ public class CustomerControllerTest {
                         .content("{\"first_name\":\"first\", \"last_name\":\"last\", \"email_address\":\"\", \"contact_number\":\"9090909090\", \"password\":\"qawsedrf@123\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("code").value("SGR-005"));
-        verify(mockCustomerService, times(0)).saveCustomer(any());
+        verify(mockCustomerService, times(1)).saveCustomer(any());
     }
 
     //This test case passes when you have handled the exception of trying to signup with invalid email-id.
@@ -129,6 +129,7 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("code").value("SGR-001"));
         verify(mockCustomerService, times(1)).saveCustomer(any());
     }
+
 
     // ----------------------------- POST /customer/login --------------------------------
 
@@ -196,6 +197,7 @@ public class CustomerControllerTest {
         verify(mockCustomerService, times(1)).authenticate("9090909090", "IncorrectPassword");
     }
 
+
     // ----------------------------- POST /customer/logout --------------------------------
 
     //This test case passes when you are able to logout successfully.
@@ -262,6 +264,7 @@ public class CustomerControllerTest {
         verify(mockCustomerService, times(1)).logout("auth");
     }
 
+
     // ----------------------------- PUT /customer --------------------------------
 
     //This test case passes when you are able to update customer details successfully.
@@ -297,11 +300,11 @@ public class CustomerControllerTest {
         mockMvc
                 .perform(put("/customer")
                         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                        .header("authorization", "auth")
+                        .header("authorization", "Bearer auth")
                         .content("{\"first_name\":\"\", \"last_name\":\"last\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("code").value("UCR-002"));
-        verify(mockCustomerService, times(0)).getCustomer(anyString());
+        verify(mockCustomerService, times(1)).getCustomer(anyString());
         verify(mockCustomerService, times(0)).updateCustomer(any());
     }
 
